@@ -1,0 +1,30 @@
+task: medmcqa_sc_zeroshot
+generation_kwargs:
+  do_sample: true
+  temperature: 0.7 # from the paper "SELF-CONSISTENCY IMPROVES CHAIN OF THOUGHT REASONING IN LANGUAGE MODELS: https://arxiv.org/pdf/2203.11171.pdf"
+dataset_path: medmcqa
+output_type: multiple_choice
+training_split: train
+validation_split: validation
+test_split: validation
+doc_to_text: !function utils_medmcqa.doc_to_text_cot
+doc_to_target: cop
+doc_to_choice: [ 'A','B','C','D' ]
+should_decontaminate: true
+doc_to_decontamination_query: "{{question}}"
+metric_list:
+  - metric: acc
+    aggregation: mean
+    higher_is_better: true
+  - metric: acc_norm
+    aggregation: mean
+    higher_is_better: true
+repeats: 40 # not sure, I believe that it should match the top-k value
+num_fewshot: 0
+filter_list:
+  - name: "majority_vote_40"
+  filter:
+    - function: "take_first_k"
+      k: 40 # from the paper "SELF-CONSISTENCY IMPROVES CHAIN OF THOUGHT REASONING IN LANGUAGE MODELS: https://arxiv.org/pdf/2203.11171.pdf"
+    - function: "majority_vote"
+    - function: "take_first"
